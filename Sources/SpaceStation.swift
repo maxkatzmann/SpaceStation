@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 @main
 struct SpaceStation: App {
-  @StateObject var eventMonitor = EventMonitor()
+  @State var eventMonitor = EventMonitor()
 
   @MainActor
   init() {
