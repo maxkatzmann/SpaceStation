@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 @main
 struct SpaceStation: App {
-  @State var currentNumber: String = "1"
+  @StateObject var eventMonitor = EventMonitor()
 
   @MainActor
   init() {
@@ -26,17 +26,12 @@ struct SpaceStation: App {
   }
 
   func menuBar() -> some Scene {
-    MenuBarExtra(currentNumber, systemImage: "\(currentNumber).circle") {
-      // 3
+    MenuBarExtra {
       Button("One") {
-        currentNumber = "1"
+        print("Button one pressed")
       }
-      Button("Two") {
-        currentNumber = "2"
-      }
-      Button("Three") {
-        currentNumber = "3"
-      }
+    } label: {
+      Text(self.eventMonitor.code)
     }
   }
 }

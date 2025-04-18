@@ -30,3 +30,4 @@ targets:
       base:
         DEVELOPMENT_TEAM: QXZJBK5KC8
         CODE_SIGN_STYLE: Automatic
+        ENABLE_APP_SANDBOX: NO
