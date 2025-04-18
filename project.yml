@@ -1,0 +1,21 @@
+name: SpaceStation
+options:
+  bundleIdPrefix: com.nsintegermax.spacestation
+
+targets:
+  SpaceStation:
+    type: application
+    platform: macOS
+    deploymentTarget: 14.0
+    sources:
+      - path: Sources
+    dependencies: []
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: SpaceStation
+        NSMainStoryboardFile: ""
+    settings:
+      base:
+        DEVELOPMENT_TEAM: QXZJBK5KC8
+        CODE_SIGN_STYLE: Automatic
