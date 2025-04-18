@@ -1,6 +1,15 @@
 name: SpaceStation
+
 options:
   bundleIdPrefix: com.nsintegermax.spacestation
+
+packages:
+  AXSwift:
+    url: https://github.com/tmandry/AXSwift
+    from: 0.3.2
+  PromiseKit:
+    url: https://github.com/mxcl/PromiseKit
+    from: 6.13.3
 
 targets:
   SpaceStation:
@@ -9,7 +18,9 @@ targets:
     deploymentTarget: 14.0
     sources:
       - path: Sources
-    dependencies: []
+    dependencies:
+      - package: AXSwift
+      - package: PromiseKit
     info:
       path: Sources/Info.plist
       properties:

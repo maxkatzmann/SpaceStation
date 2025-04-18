@@ -1,3 +1,5 @@
+import AXSwift
+import PromiseKit
 import SwiftUI
 
 @MainActor
@@ -8,9 +10,17 @@ struct SpaceStation: App {
   @MainActor
   init() {
     print("Launching SpaceStation")
+
+    guard AXSwift.checkIsProcessTrusted(prompt: true) else {
+      print("Not trusted as an AX process; please authorize and re-launch")
+      NSApp.terminate(self)
+      return
+    }
+
+    print("Trusted!")
   }
 
-  @MainActor  // macOS 13
+  @MainActor
   var body: some Scene {
     menuBar()
   }
