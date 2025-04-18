@@ -31,7 +31,7 @@ struct SpaceStation: App {
         print("Button one pressed")
       }
     } label: {
-      Text(self.eventMonitor.code)
+      Text(self.eventMonitor.code + " " + (self.eventMonitor.optionDown ? "option" : ""))
     }
   }
 }
