@@ -1,11 +1,13 @@
 import AppKit
 import Foundation
-import SwiftUI
 import Swindler
 
-@Observable
+protocol EventMonitorDelegate: AnyObject {
+  func didObserveEvent()
+}
+
 class EventMonitor {
-  var events: Int = 0
+  var delgate: EventMonitorDelegate?
 
   private var timer: Timer?
 
@@ -15,7 +17,7 @@ class EventMonitor {
         return
       }
 
-      self.events += 1
+      self.delgate?.didObserveEvent()
       self.optionDown ? startRecurringTimer() : stopRecurringTimer()
     }
   }
@@ -39,11 +41,11 @@ class EventMonitor {
       self.swindler = state
 
       self.swindler.on { (event: FrontmostApplicationChangedEvent) in
-        self.events += 1
+        self.delgate?.didObserveEvent()
       }
 
       self.swindler.on { (event: ApplicationFocusedWindowChangedEvent) in
-        self.events += 1
+        self.delgate?.didObserveEvent()
       }
 
     }.catch { error in
@@ -67,6 +69,6 @@ class EventMonitor {
   }
 
   private func handleTimerFired() {
-    self.events += 1
+    self.delgate?.didObserveEvent()
   }
 }

@@ -4,8 +4,8 @@ import SwiftUI
 
 @MainActor
 @main
-struct SpaceStation: App {
-  @State var eventMonitor = EventMonitor()
+struct SpaceStationApp: App {
+  @State var spaceStation = SpaceStation()
 
   @MainActor
   init() {
@@ -31,7 +31,7 @@ struct SpaceStation: App {
         print("Button one pressed")
       }
     } label: {
-      Text("\(self.eventMonitor.events)")
+      Text("\(self.spaceStation.spaces.first ?? -1)")
     }
   }
 }
