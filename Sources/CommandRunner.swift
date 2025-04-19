@@ -1,0 +1,26 @@
+import Foundation
+
+class CommandRunner {
+  static func runAeroSpaceCommand(withArguments arguments: [String]) -> Data? {
+    let process = Process()
+    process.executableURL = URL(
+      fileURLWithPath:
+        // "/Users/mkatzmann/Documents/Development/util/AeroSpace/.build/arm64-apple-macosx/debug/aerospace"
+        "/Users/mkatzmann/Local/AeroSpace/.release/aerospace"
+    )
+    process.arguments = arguments
+
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = pipe
+
+    do {
+      try process.run()
+      process.waitUntilExit()
+      return pipe.fileHandleForReading.readDataToEndOfFile()
+    } catch {
+      print("Error running command: \(error)")
+      return nil
+    }
+  }
+}
