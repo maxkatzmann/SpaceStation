@@ -5,7 +5,6 @@ class CommandRunner {
     let process = Process()
     process.executableURL = URL(
       fileURLWithPath:
-        // "/Users/mkatzmann/Documents/Development/util/AeroSpace/.build/arm64-apple-macosx/debug/aerospace"
         "/Users/mkatzmann/Local/AeroSpace/.release/aerospace"
     )
     process.arguments = arguments

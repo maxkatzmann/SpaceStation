@@ -5,8 +5,7 @@ struct SpaceStationView: View {
   var space: Space
 
   var name: String { space.name }
-  var bundleIdentifiers: [String] { space.windows.map { $0.appBundleId } }
-  // var focussedIndex: Int? { workspaceDisplayInfo.indexOfFocussed }
+  var windows: [Window] { space.windows }
 
   var body: some View {
     let renderer = ImageRenderer(
@@ -14,12 +13,12 @@ struct SpaceStationView: View {
         HStack {
           SpaceIndicator(name: name)
           Spacer(minLength: 20.0)
-          ForEach(Array(bundleIdentifiers.enumerated()), id: \.offset) {
+          ForEach(Array(windows.enumerated()), id: \.offset) {
             index,
-            bundleIdentifier in
+            window in
             WindowIndicator(
-              bundleIdentifier: bundleIdentifier,
-              focussed: false  // index == focussedIndex
+              bundleIdentifier: window.appBundleId,
+              focussed: window.isFocused
             )
           }
         }
