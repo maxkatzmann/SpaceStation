@@ -137,7 +137,9 @@ class SpaceStation: ObservableObject {
         }
       }
 
-      self?.spaces = spaces
+      DispatchQueue.main.async {
+        self?.spaces = spaces
+      }
     }
   }
 
