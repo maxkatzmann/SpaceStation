@@ -1,10 +1,13 @@
 import AppKit
+import Foundation
 import SwiftUI
 import Swindler
 
 @Observable
 class EventMonitor {
   var events: Int = 0
+
+  private var timer: Timer?
 
   private var optionDown: Bool = false {
     didSet {
@@ -13,6 +16,7 @@ class EventMonitor {
       }
 
       self.events += 1
+      self.optionDown ? startRecurringTimer() : stopRecurringTimer()
     }
   }
 
@@ -49,5 +53,20 @@ class EventMonitor {
     }
   }
 
-  // TODO: Included timed action to update option state every x milliseconds as long as optionIsDown
+  private func startRecurringTimer() {
+    stopRecurringTimer()
+
+    timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+      self?.handleTimerFired()
+    }
+  }
+
+  private func stopRecurringTimer() {
+    timer?.invalidate()
+    timer = nil
+  }
+
+  private func handleTimerFired() {
+    self.events += 1
+  }
 }
