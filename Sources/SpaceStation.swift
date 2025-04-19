@@ -7,6 +7,10 @@ struct Space {
   var isFocused: Bool = false
 }
 
+struct SpaceSelection: Codable {
+  let workspace: String
+}
+
 // Define a struct to represent window information
 struct Window: Codable, Hashable {
   let windowId: Int
@@ -65,19 +69,45 @@ class SpaceStation: ObservableObject {
           isFocused: false
         )
       }
-      .sorted(using: KeyPathComparator(\.name))
+
+    if let focusedWorkspace = self.focusedWorkspace() {
+      var spaceFound = false
+
+      if focusedWorkspace == "3" {
+        print("Here!")
+      }
+
+      for i in 0..<spaces.count {
+        if spaces[i].name == focusedWorkspace {
+          spaces[i].isFocused = true
+          spaceFound = true
+        } else {
+          spaces[i].isFocused = false
+        }
+      }
+
+      if !spaceFound {
+        spaces.append(
+          Space(
+            name: focusedWorkspace,
+            windows: [],
+            isFocused: true
+          )
+        )
+      }
+    }
+
+    spaces = spaces.sorted(using: KeyPathComparator(\.name))
 
     if let focusedWindow = self.focusedWindow(),
-      let focusedSpaceIndex = spaces.firstIndex(where: { $0.name == focusedWindow.workspace }),
+      let focusedSpaceIndex = spaces.firstIndex(where: { $0.isFocused }),
       let focusedWindowIndex = spaces[focusedSpaceIndex].windows.firstIndex(where: {
         $0.windowId == focusedWindow.windowId
       })
     {
-      spaces[focusedSpaceIndex].isFocused = true
       spaces[focusedSpaceIndex].windows[focusedWindowIndex].isFocused = true
     } else {
       for i in 0..<spaces.count {
-        spaces[i].isFocused = false
         for j in 0..<spaces[i].windows.count {
           spaces[i].windows[j].isFocused = false
         }
@@ -85,6 +115,24 @@ class SpaceStation: ObservableObject {
     }
 
     self.spaces = spaces
+  }
+
+  func focusedWorkspace() -> String? {
+    guard
+      let result = CommandRunner.runAeroSpaceCommand(withArguments: [
+        "list-workspaces",
+        "--focused",
+        "--json",
+      ])
+    else {
+      return nil
+    }
+
+    guard let selection = try? JSONDecoder().decode([SpaceSelection].self, from: result) else {
+      return nil
+    }
+
+    return selection.first?.workspace
   }
 
   func focusedWindow() -> Window? {
