@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 @main
 struct SpaceStationApp: App {
-  @State var spaceStation = SpaceStation()
+  @StateObject var spaceStation = SpaceStation()
 
   @MainActor
   init() {
@@ -27,11 +27,19 @@ struct SpaceStationApp: App {
 
   func menuBar() -> some Scene {
     MenuBarExtra {
-      Button("One") {
-        print("Button one pressed")
+      ForEach(spaceStation.spaces, id: \.name) { space in
+        Button {
+          print("Space \(space.name) pressed")
+        } label: {
+          SpaceStationView(space: space)
+        }
       }
     } label: {
-      Text("\(self.spaceStation.spaces.first ?? -1)")
+      if let space = spaceStation.spaces.first { $0.isFocused } {
+        SpaceStationView(space: space)
+      } else {
+        Text("SpaceStation")
+      }
     }
   }
 }

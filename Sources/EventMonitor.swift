@@ -58,7 +58,7 @@ class EventMonitor {
   private func startRecurringTimer() {
     stopRecurringTimer()
 
-    timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+    timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
       self?.handleTimerFired()
     }
   }
