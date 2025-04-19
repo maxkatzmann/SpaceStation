@@ -10,7 +10,7 @@ struct Space {
 // Define a struct to represent window information
 struct Window: Codable, Hashable {
   let windowId: Int
-  let appBundleId: String
+  var appBundleId: String
   let workspace: String
   var isFocused: Bool = false
 
@@ -44,8 +44,16 @@ class SpaceStation: ObservableObject {
       return
     }
 
-    guard let windows = try? JSONDecoder().decode([Window].self, from: result) else {
+    guard var windows = try? JSONDecoder().decode([Window].self, from: result) else {
       return
+    }
+
+    // Neovide hack. Currently, neovide does not have an appBundleId for any but the very first window.
+    for i in 0..<windows.count {
+      // Remove the app bundle id from the window
+      if windows[i].appBundleId == "NULL-APP-BUNDLE-ID" {
+        windows[i].appBundleId = "com.neovide.neovide"
+      }
     }
 
     var spaces = Dictionary(grouping: windows, by: { $0.workspace })
