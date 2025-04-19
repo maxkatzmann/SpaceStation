@@ -28,6 +28,7 @@ struct Window: Codable, Hashable {
 // @Observable
 class SpaceStation: ObservableObject {
   private let eventMonitor = EventMonitor()
+  private var currentUpdateTask: Task<Void, Never>? = nil
 
   @Published var spaces: [Space] = []
 
@@ -36,85 +37,108 @@ class SpaceStation: ObservableObject {
   }
 
   func updateSpaces() {
-    guard
-      let result = CommandRunner.runAeroSpaceCommand(withArguments: [
-        "list-windows",
-        "--all",
-        "--json",
-        "--format",
-        "%{window-id} %{app-bundle-id} %{workspace}",
-      ])
-    else {
-      return
-    }
-
-    guard var windows = try? JSONDecoder().decode([Window].self, from: result) else {
-      return
-    }
-
-    // Neovide hack. Currently, neovide does not have an appBundleId for any but the very first window.
-    for i in 0..<windows.count {
-      // Remove the app bundle id from the window
-      if windows[i].appBundleId == "NULL-APP-BUNDLE-ID" {
-        windows[i].appBundleId = "com.neovide.neovide"
-      }
-    }
-
-    var spaces = Dictionary(grouping: windows, by: { $0.workspace })
-      .map {
-        spaceIdentifier, windows in
-        Space(
-          name: spaceIdentifier,
-          windows: windows,
-          isFocused: false
-        )
+    currentUpdateTask?.cancel()
+    currentUpdateTask = Task { [weak self] in
+      guard !Task.isCancelled else {
+        return
       }
 
-    if let focusedWorkspace = self.focusedWorkspace() {
-      var spaceFound = false
-
-      if focusedWorkspace == "3" {
-        print("Here!")
+      guard
+        let result = CommandRunner.runAeroSpaceCommand(withArguments: [
+          "list-windows",
+          "--all",
+          "--json",
+          "--format",
+          "%{window-id} %{app-bundle-id} %{workspace}",
+        ])
+      else {
+        return
       }
 
-      for i in 0..<spaces.count {
-        if spaces[i].name == focusedWorkspace {
-          spaces[i].isFocused = true
-          spaceFound = true
-        } else {
-          spaces[i].isFocused = false
+      guard !Task.isCancelled else {
+        return
+      }
+
+      guard var windows = try? JSONDecoder().decode([Window].self, from: result) else {
+        return
+      }
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      // Neovide hack. Currently, neovide does not have an appBundleId for any but the very first window.
+      for i in 0..<windows.count {
+        // Remove the app bundle id from the window
+        if windows[i].appBundleId == "NULL-APP-BUNDLE-ID" {
+          windows[i].appBundleId = "com.neovide.neovide"
         }
       }
 
-      if !spaceFound {
-        spaces.append(
+      var spaces = Dictionary(grouping: windows, by: { $0.workspace })
+        .map {
+          spaceIdentifier, windows in
           Space(
-            name: focusedWorkspace,
-            windows: [],
-            isFocused: true
+            name: spaceIdentifier,
+            windows: windows,
+            isFocused: false
           )
-        )
+        }
+
+      guard !Task.isCancelled else {
+        return
       }
-    }
 
-    spaces = spaces.sorted(using: KeyPathComparator(\.name))
+      if let focusedWorkspace = self?.focusedWorkspace() {
+        var spaceFound = false
 
-    if let focusedWindow = self.focusedWindow(),
-      let focusedSpaceIndex = spaces.firstIndex(where: { $0.isFocused }),
-      let focusedWindowIndex = spaces[focusedSpaceIndex].windows.firstIndex(where: {
-        $0.windowId == focusedWindow.windowId
-      })
-    {
-      spaces[focusedSpaceIndex].windows[focusedWindowIndex].isFocused = true
-    } else {
-      for i in 0..<spaces.count {
-        for j in 0..<spaces[i].windows.count {
-          spaces[i].windows[j].isFocused = false
+        if focusedWorkspace == "3" {
+          print("Here!")
+        }
+
+        for i in 0..<spaces.count {
+          if spaces[i].name == focusedWorkspace {
+            spaces[i].isFocused = true
+            spaceFound = true
+          } else {
+            spaces[i].isFocused = false
+          }
+        }
+
+        if !spaceFound {
+          spaces.append(
+            Space(
+              name: focusedWorkspace,
+              windows: [],
+              isFocused: true
+            )
+          )
         }
       }
-    }
 
-    self.spaces = spaces
+      spaces = spaces.sorted(using: KeyPathComparator(\.name))
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      if let focusedWindow = self?.focusedWindow(),
+        let focusedSpaceIndex = spaces.firstIndex(where: { $0.isFocused }),
+        let focusedWindowIndex = spaces[focusedSpaceIndex].windows.firstIndex(where: {
+          $0.windowId == focusedWindow.windowId
+        })
+      {
+        spaces[focusedSpaceIndex].windows[focusedWindowIndex].isFocused = true
+      } else {
+        for i in 0..<spaces.count {
+          for j in 0..<spaces[i].windows.count {
+            spaces[i].windows[j].isFocused = false
+          }
+        }
+      }
+
+      self?.spaces = spaces
+    }
   }
 
   func focusedWorkspace() -> String? {
