@@ -1,16 +1,51 @@
 import AppKit
 import SwiftUI
+import Swindler
 
 @Observable
 class EventMonitor {
-  var code: String = "0"
-  var optionDown: Bool = false
+  var events: Int = 0
+
+  private var optionDown: Bool = false {
+    didSet {
+      guard self.optionDown != oldValue else {
+        return
+      }
+
+      self.events += 1
+    }
+  }
+
+  private var swindler: Swindler.State!
 
   init() {
-    NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .flagsChanged]) {
+    self.setupModifierEventMonitor()
+    self.setupWindowEventMonitor()
+  }
+
+  func setupModifierEventMonitor() {
+    NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) {
       [weak self] (event) in
-      self?.code = "\(event.keyCode)"
       self?.optionDown = NSEvent.modifierFlags.contains(.option)
+    }
+  }
+
+  func setupWindowEventMonitor() {
+    Swindler.initialize().done { state in
+      self.swindler = state
+
+      self.swindler.on { (event: FrontmostApplicationChangedEvent) in
+        self.events += 1
+      }
+
+      self.swindler.on { (event: ApplicationFocusedWindowChangedEvent) in
+        self.events += 1
+      }
+
+    }.catch { error in
+      print(
+        "Fatal error: failed to initialize Swindler: \(String(describing: error))")
+      NSApp.terminate(self)
     }
   }
 

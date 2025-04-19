@@ -10,6 +10,9 @@ packages:
   PromiseKit:
     url: https://github.com/mxcl/PromiseKit
     from: 6.13.3
+  Swindler:
+    url: https://github.com/tmandry/Swindler
+    branch: main
 
 targets:
   SpaceStation:
@@ -21,6 +24,7 @@ targets:
     dependencies:
       - package: AXSwift
       - package: PromiseKit
+      - package: Swindler
     info:
       path: Sources/Info.plist
       properties:
