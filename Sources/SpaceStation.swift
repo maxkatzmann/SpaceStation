@@ -33,7 +33,7 @@ class SpaceStation: ObservableObject {
   @Published var spaces: [Space] = []
 
   init() {
-    self.eventMonitor.delgate = self
+    self.eventMonitor.delegate = self
   }
 
   func updateSpaces() {

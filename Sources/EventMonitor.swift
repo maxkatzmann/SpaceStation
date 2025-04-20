@@ -7,7 +7,7 @@ protocol EventMonitorDelegate: AnyObject {
 }
 
 class EventMonitor {
-  var delgate: EventMonitorDelegate?
+  var delegate: EventMonitorDelegate?
 
   private var timer: Timer?
 
@@ -17,7 +17,7 @@ class EventMonitor {
         return
       }
 
-      self.delgate?.didObserveEvent()
+      self.sendEvent()
       self.optionDown ? startRecurringTimer() : stopRecurringTimer()
     }
   }
@@ -25,8 +25,12 @@ class EventMonitor {
   private var swindler: Swindler.State!
 
   init() {
+    // Events related to using the option modifier
     self.setupModifierEventMonitor()
+    // Events related creation / destruction of windows
     self.setupWindowEventMonitor()
+    // Events triggered by AeroSpace
+    self.setupDistributedNotificationObserver()
   }
 
   func setupModifierEventMonitor() {
@@ -40,14 +44,16 @@ class EventMonitor {
     Swindler.initialize().done { state in
       self.swindler = state
 
-      self.swindler.on { (event: FrontmostApplicationChangedEvent) in
-        self.delgate?.didObserveEvent()
+      // We send these events with a delay to avoid crashes in AeroSpace,
+      // which probably occur since AeroSpace has some internal cleanup to
+      // do, before the state is ready to be queried again.
+      self.swindler.on { (event: WindowCreatedEvent) in
+        self.sendEvent(withDelay: true)
       }
 
-      self.swindler.on { (event: ApplicationFocusedWindowChangedEvent) in
-        self.delgate?.didObserveEvent()
+      self.swindler.on { (event: WindowDestroyedEvent) in
+        self.sendEvent(withDelay: true)
       }
-
     }.catch { error in
       print(
         "Fatal error: failed to initialize Swindler: \(String(describing: error))")
@@ -55,11 +61,26 @@ class EventMonitor {
     }
   }
 
+  private func setupDistributedNotificationObserver() {
+    DistributedNotificationCenter.default().addObserver(
+      self,
+      selector: #selector(externalEventReceived(_:)),
+      name: NSNotification.Name("com.nsintegermax.spacestation.event"),
+      object: nil
+    )
+  }
+
+  @objc private func externalEventReceived(_ notification: Notification) {
+    DispatchQueue.main.async {
+      self.sendEvent()
+    }
+  }
+
   private func startRecurringTimer() {
     stopRecurringTimer()
 
     timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-      self?.handleTimerFired()
+      self?.sendEvent()
     }
   }
 
@@ -68,7 +89,13 @@ class EventMonitor {
     timer = nil
   }
 
-  private func handleTimerFired() {
-    self.delgate?.didObserveEvent()
+  private func sendEvent(withDelay: Bool = false) {
+    if withDelay {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        self.delegate?.didObserveEvent()
+      }
+    } else {
+      self.delegate?.didObserveEvent()
+    }
   }
 }

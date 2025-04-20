@@ -1,6 +1,17 @@
 # SpaceStation
 
-Archive the app from Xcode and add it to the "Anmeldeobjekte" in Settings
+- Archive the app from Xcode and add it to the "Anmeldeobjekte" in Settings
+- Build the `main` file using
+
+```bash
+swiftc Sources/main.swift -o main
+```
+
+- Add the following to your `.aerospace[-debug].toml`
+
+```toml
+on-focus-changed = ['exec-and-forget /Users/mkatzmann/Local/SpaceStation/main']
+```
 
 ## AeroSpace
 
