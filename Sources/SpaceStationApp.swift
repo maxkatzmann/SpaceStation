@@ -34,6 +34,14 @@ struct SpaceStationApp: App {
           SpaceStationView(space: space)
         }
       }
+
+      Divider()
+
+      Button {
+        NSApp.terminate(self)
+      } label: {
+        Text("Quit")
+      }
     } label: {
       if let space = spaceStation.spaces.first(where: { $0.isFocused }) {
         SpaceStationView(space: space)
