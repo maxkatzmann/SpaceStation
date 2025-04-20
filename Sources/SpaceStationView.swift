@@ -38,21 +38,21 @@ struct SpaceIndicator: View {
   let name: String
 
   var body: some View {
-    switch name {
-    case "1":
-      Image(systemName: "house")
-        .font(.system(.largeTitle))
-    case "2":
-      Image(systemName: "message")
-        .font(.system(.largeTitle))
-    case "3":
-      Image(systemName: "hammer")
-        .font(.system(.largeTitle))
-    case "4":
-      Image(systemName: "hourglass")
-        .font(.system(.largeTitle))
-    case _: Text(name).font(.system(.largeTitle))
+    Group {
+      switch name {
+      case "1":
+        Image(systemName: "house")
+      case "2":
+        Image(systemName: "message")
+      case "3":
+        Image(systemName: "hammer")
+      case "4":
+        Image(systemName: "hourglass")
+      case _: Text(name)
+      }
     }
+    .font(.system(.largeTitle))
+    .foregroundStyle(Color.white)
   }
 }
 
