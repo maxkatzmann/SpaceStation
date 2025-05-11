@@ -235,9 +235,6 @@ class SpaceStation: ObservableObject {
       windows += space.windows
       windows += Window.blanks(count: windowsPerSpace - windows.count)
     } else {
-      print(
-        "No selected index for space \(space.name) (current: \(String(describing: self.focusedWorkspace())))"
-      )
       windows += space.windows
     }
 

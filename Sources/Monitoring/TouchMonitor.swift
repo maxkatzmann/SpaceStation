@@ -73,7 +73,8 @@ class TouchMonitor: ObservableObject {
 
   // How far we need to move until we consider the movement
   // to trigger an action.
-  let actionDistanceThreshold: CGFloat = 0.075
+  let actionDistanceThresholdVertical: CGFloat = 0.085
+  let actionDistanceThresholdHorizontal: CGFloat = 0.075
 
   // Time before we have to reach the action threshold.
   // Everything below is a swipe, everything above is a pan.
@@ -81,7 +82,7 @@ class TouchMonitor: ObservableObject {
 
   // How fast the first movements need to be to be considered
   // a swipe.
-  let swipeVelocityThreshold: Double = 1.25
+  let swipeVelocityThreshold: Double = 1.5
 
   // Whether we have already registered a swipe during this gesture.
   var swipeRegisteredAlready: Bool = false
@@ -230,7 +231,11 @@ class TouchMonitor: ObservableObject {
   }
 
   func interpretMovement(_ distance: CGFloat, axis: Axis, velocity: Double, time: TimeInterval) {
-    let delta = Int(distance / self.actionDistanceThreshold)
+    let delta = Int(
+      distance
+        / (axis == .horizontal
+          ? self.actionDistanceThresholdHorizontal
+          : self.actionDistanceThresholdVertical))
     guard abs(delta) > 0 else {
       return
     }
