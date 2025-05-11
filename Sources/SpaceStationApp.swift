@@ -6,6 +6,7 @@ import SwiftUI
 @main
 struct SpaceStationApp: App {
   @StateObject var spaceStation = SpaceStation()
+  private let windowController = FloatingWindowController()
 
   @MainActor
   init() {
@@ -23,6 +24,13 @@ struct SpaceStationApp: App {
   @MainActor
   var body: some Scene {
     menuBar()
+      .onChange(of: spaceStation.shouldDisplay) { _, shouldDisplay in
+        if shouldDisplay {
+          windowController.showWindow(with: SpaceStationView(), spaceStation: spaceStation)
+        } else {
+          windowController.hideWindow()
+        }
+      }
   }
 
   func menuBar() -> some Scene {

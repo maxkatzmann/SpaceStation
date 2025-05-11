@@ -1,0 +1,61 @@
+import SwiftUI
+
+// Window delegate to handle window closing
+class WindowDelegate: NSObject, NSWindowDelegate {
+  let spaceStation: SpaceStation
+
+  init(spaceStation: SpaceStation) {
+    self.spaceStation = spaceStation
+    super.init()
+  }
+}
+
+// Window controller for the floating window
+class FloatingWindowController {
+  private var window: NSWindow?
+  private var windowDelegate: WindowDelegate?
+
+  func showWindow(with rootView: some View, spaceStation: SpaceStation) {
+    if window != nil {
+      window?.orderFront(nil)
+      return
+    }
+
+    // Create the window
+    let window = NSWindow(
+      contentRect: NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 800, height: 600),
+      styleMask: [.hudWindow],
+      backing: .buffered,
+      defer: false
+    )
+
+    // Configure window properties
+    window.center()
+    window.isReleasedWhenClosed = false
+    window.level = .floating  // This makes it stay on top of other windows
+    window.title = "SpaceStation"
+    window.titleVisibility = .hidden
+    window.titlebarAppearsTransparent = true
+    window.backgroundColor = .clear
+    window.isOpaque = false
+    window.hasShadow = false  // Optional, removes the window shadow
+    window.standardWindowButton(.closeButton)?.isHidden = true
+    window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+    window.standardWindowButton(.zoomButton)?.isHidden = true
+
+    // Set window content
+    let hostingView = NSHostingView(rootView: rootView.environmentObject(spaceStation))
+    window.contentView = hostingView
+
+    // Set up window delegate
+    windowDelegate = WindowDelegate(spaceStation: spaceStation)
+    window.delegate = windowDelegate
+
+    self.window = window
+    window.makeKeyAndOrderFront(nil)
+  }
+
+  func hideWindow() {
+    window?.orderOut(nil)
+  }
+}
