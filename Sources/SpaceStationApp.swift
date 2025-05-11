@@ -34,7 +34,7 @@ struct SpaceStationApp: App {
           )
           self.spaceStation.updateSpaces()
         } label: {
-          SpaceStationView(space: space)
+          SpaceStationMenuBarView(space: space)
         }
       }
 
@@ -47,7 +47,7 @@ struct SpaceStationApp: App {
       }
     } label: {
       if let space = spaceStation.spaces.first(where: { $0.isFocused }) {
-        SpaceStationView(space: space)
+        SpaceStationMenuBarView(space: space)
       } else {
         Text("SpaceStation")
       }

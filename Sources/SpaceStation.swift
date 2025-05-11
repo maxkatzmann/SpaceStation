@@ -25,7 +25,6 @@ struct Window: Codable, Hashable {
   }
 }
 
-// @Observable
 class SpaceStation: ObservableObject {
   private let eventMonitor = EventMonitor()
   private var currentUpdateTask: Task<Void, Never>? = nil

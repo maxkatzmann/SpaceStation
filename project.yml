@@ -21,6 +21,8 @@ targets:
     deploymentTarget: 14.0
     sources:
       - path: Sources
+        excludes:
+          - "main.swift"
     dependencies:
       - package: AXSwift
       - package: PromiseKit

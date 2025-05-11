@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SpaceStationView: View {
+struct SpaceStationMenuBarView: View {
   @Environment(\.colorScheme) var colorScheme: ColorScheme
   var space: Space
 

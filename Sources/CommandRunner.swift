@@ -5,7 +5,7 @@ class CommandRunner {
     let process = Process()
     process.executableURL = URL(
       fileURLWithPath:
-        "/Users/mkatzmann/Local/AeroSpace/.debug/aerospace"
+        "/Users/mkatzmann/Local/AeroSpace/.release/aerospace"
     )
     process.arguments = arguments
 
