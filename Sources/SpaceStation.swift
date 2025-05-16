@@ -80,6 +80,7 @@ class SpaceStation: ObservableObject {
   @Published var spaces: [Space] = []
   @Published var spacesRepresentation: [Space] = []
   @Published var shouldDisplay = false
+  @Published var scrollOffset: CGPoint = .zero
 
   private var lastFocusedIndexPerSpace: [String: Int] = [:]
 
@@ -238,7 +239,7 @@ class SpaceStation: ObservableObject {
       windows += space.windows
     }
 
-    let newSpace = Space(name: space.name, windows: windows)
+    let newSpace = Space(name: space.name, windows: windows, isFocused: space.isFocused)
     return newSpace
   }
 
@@ -324,5 +325,12 @@ extension SpaceStation: TouchMonitorDelegate {
 
   func didRelease() {
     self.shouldDisplay = false
+  }
+
+  func didScroll(_ axis: Axis, delta: CGFloat) {
+    self.scrollOffset = CGPoint(
+      x: axis == .horizontal ? delta : 0,
+      y: axis == .vertical ? delta : 0
+    )
   }
 }

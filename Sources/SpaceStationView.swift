@@ -49,6 +49,8 @@ struct WindowView: View {
 
 struct SpaceView: View {
   @ObservedObject var space: Space
+  @Binding var scrollOffset: CGPoint
+  let scrollFactor: CGFloat = 50.0
 
   var body: some View {
     HStack(spacing: 0) {
@@ -68,6 +70,7 @@ struct SpaceView: View {
               .fill(Color.gray.opacity(0.2))
           }
         }
+        .offset(x: space.isFocused ? scrollOffset.x * scrollFactor : 0)
       }
     }
   }
@@ -102,6 +105,7 @@ struct SpaceView: View {
 
 struct SpaceStationView: View {
   @EnvironmentObject var spaceStation: SpaceStation
+  let scrollFactor: CGFloat = 75.0
 
   var body: some View {
     ZStack {
@@ -118,14 +122,14 @@ struct SpaceStationView: View {
       }
       VStack(spacing: 10) {
         ForEach(spaceStation.spacesRepresentation, id: \.self) { space in
-          SpaceView(space: space)
+          SpaceView(space: space, scrollOffset: $spaceStation.scrollOffset)
         }
-      }
+      }.offset(y: -spaceStation.scrollOffset.y * scrollFactor)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .padding(20)
     .background {
-      VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+      VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
         .cornerRadius(10)
     }
   }

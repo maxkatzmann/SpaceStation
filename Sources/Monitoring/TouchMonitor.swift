@@ -37,6 +37,8 @@ protocol TouchMonitorDelegate {
   func isHolding()
   // Fingers have been lifted from the trackpad.
   func didRelease()
+
+  func didScroll(_ axis: Axis, delta: CGFloat)
 }
 
 class TouchMonitor: ObservableObject {
@@ -148,6 +150,12 @@ class TouchMonitor: ObservableObject {
       self.registerHoldIfNeeded(time: time)
       self.interpretMovement(delta.x, axis: .horizontal, velocity: velocity, time: time)
       self.interpretMovement(delta.y, axis: .vertical, velocity: velocity, time: time)
+    }
+
+    if abs(delta.x) > abs(delta.y) {
+      self.delegate?.didScroll(.horizontal, delta: delta.x)
+    } else {
+      self.delegate?.didScroll(.vertical, delta: delta.y)
     }
   }
 
