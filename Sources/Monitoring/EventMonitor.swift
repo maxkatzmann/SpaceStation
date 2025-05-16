@@ -4,12 +4,18 @@ import Swindler
 
 protocol EventMonitorDelegate: AnyObject {
   func didObserveEvent()
+
+  // Called when the option key is held uninterrupted for a specific time.
+  func isHolding()
+  // Called when the option key is released.
+  func didRelease()
 }
 
 class EventMonitor {
   var delegate: EventMonitorDelegate?
 
-  private var timer: Timer?
+  private var recurringTimer: Timer?
+  private var uninterruptedOptionDownTimer: Timer?
 
   private var optionDown: Bool = false {
     didSet {
@@ -19,6 +25,11 @@ class EventMonitor {
 
       self.sendEvent()
       self.optionDown ? startRecurringTimer() : stopRecurringTimer()
+      self.optionDown ? startUninterruptedOptionDownTimer() : stopUninterruptedOptionDownTimer()
+
+      if !self.optionDown {
+        self.delegate?.didRelease()
+      }
     }
   }
 
@@ -31,12 +42,25 @@ class EventMonitor {
     self.setupWindowEventMonitor()
     // Events triggered by AeroSpace
     self.setupDistributedNotificationObserver()
+    // We want to be able to cancel the timer that is
+    // used to determine when the option key is held,
+    // e.g., pressing opt+backspace is definitely not
+    // meant to trigger the holding.
+    self.setupKeyPressMonitor()
   }
 
   func setupModifierEventMonitor() {
     NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) {
       [weak self] (event) in
       self?.optionDown = NSEvent.modifierFlags.contains(.option)
+    }
+  }
+
+  func setupKeyPressMonitor() {
+    NSEvent.addGlobalMonitorForEvents(matching: [.keyUp]) { [weak self] _ in
+      if self?.uninterruptedOptionDownTimer != nil {
+        self?.stopUninterruptedOptionDownTimer()
+      }
     }
   }
 
@@ -79,14 +103,27 @@ class EventMonitor {
   private func startRecurringTimer() {
     stopRecurringTimer()
 
-    timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+    recurringTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
       self?.sendEvent()
     }
   }
 
   private func stopRecurringTimer() {
-    timer?.invalidate()
-    timer = nil
+    recurringTimer?.invalidate()
+    recurringTimer = nil
+  }
+
+  private func startUninterruptedOptionDownTimer() {
+    stopUninterruptedOptionDownTimer()
+    uninterruptedOptionDownTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) {
+      [weak self] _ in
+      self?.delegate?.isHolding()
+    }
+  }
+
+  private func stopUninterruptedOptionDownTimer() {
+    uninterruptedOptionDownTimer?.invalidate()
+    uninterruptedOptionDownTimer = nil
   }
 
   private func sendEvent(withDelay: Bool = false) {
