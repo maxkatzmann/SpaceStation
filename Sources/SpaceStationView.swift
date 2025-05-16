@@ -52,11 +52,51 @@ struct SpaceView: View {
 
   var body: some View {
     HStack(spacing: 0) {
-      ForEach(space.windows, id: \.self) { window in
-        WindowView(window: window)
-          .frame(width: 100.0, height: 100.0, alignment: .center)
+      let groups = groupContinuousWindows(space.windows)
+
+      ForEach(Array(groups.enumerated()), id: \.offset) { index, windowGroup in
+        HStack(spacing: 0) {
+          ForEach(windowGroup, id: \.self) { window in
+            WindowView(window: window)
+              .frame(width: 100.0, height: 100.0, alignment: .center)
+          }
+        }
+        .padding(5)
+        .background {
+          if !(windowGroup.first?.isBlank ?? true) {
+            RoundedRectangle(cornerRadius: 15)
+              .fill(Color.gray.opacity(0.2))
+          }
+        }
       }
     }
+  }
+
+  private func groupContinuousWindows(_ windows: [Window]) -> [[Window]] {
+    let firstNonBlankIndex = windows.firstIndex(where: { !$0.isBlank })
+    let lastNonBlankIndex = windows.lastIndex(where: { !$0.isBlank })
+
+    var groups: [[Window]] = []
+
+    if let firstNonBlankIndex, let lastNonBlankIndex {
+      if firstNonBlankIndex > 0 {
+        groups.append(Array(windows[0..<firstNonBlankIndex]))
+      } else {
+        groups.append([])
+      }
+
+      groups.append(Array(windows[firstNonBlankIndex...lastNonBlankIndex]))
+
+      if lastNonBlankIndex < windows.count - 1 {
+        groups.append(Array(windows[(lastNonBlankIndex + 1)...]))
+      } else {
+        groups.append([])
+      }
+
+      return groups
+    }
+
+    return [] + [windows] + []
   }
 }
 
@@ -76,7 +116,7 @@ struct SpaceStationView: View {
         }
         Spacer()
       }
-      VStack(spacing: 0) {
+      VStack(spacing: 10) {
         ForEach(spaceStation.spacesRepresentation, id: \.self) { space in
           SpaceView(space: space)
         }
