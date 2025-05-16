@@ -5,11 +5,13 @@ class Space: Identifiable, Hashable, ObservableObject {
   let name: String
   var windows: [Window]
   var isFocused: Bool = false
+  var focusedIndex: Int? = nil
 
-  init(name: String, windows: [Window], isFocused: Bool = false) {
+  init(name: String, windows: [Window], isFocused: Bool = false, focusedIndex: Int? = nil) {
     self.name = name
     self.windows = windows
     self.isFocused = isFocused
+    self.focusedIndex = focusedIndex
   }
 
   static func == (lhs: Space, rhs: Space) -> Bool {
@@ -239,7 +241,9 @@ class SpaceStation: ObservableObject {
       windows += space.windows
     }
 
-    let newSpace = Space(name: space.name, windows: windows, isFocused: space.isFocused)
+    let newSpace = Space(
+      name: space.name, windows: windows, isFocused: space.isFocused,
+      focusedIndex: self.lastFocusedIndexPerSpace[space.name])
     return newSpace
   }
 

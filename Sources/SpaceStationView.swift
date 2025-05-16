@@ -70,6 +70,13 @@ struct SpaceView: View {
               .fill(Color.gray.opacity(0.2))
           }
         }
+        .overlay {
+          if !(windowGroup.first?.isBlank ?? true) && space.focusedIndex == nil {
+            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
+              .opacity(0.9)
+              .cornerRadius(15)
+          }
+        }
         .offset(x: space.isFocused ? scrollOffset.x * scrollFactor : 0)
       }
     }
