@@ -1,9 +1,5 @@
 import SwiftUI
 
-// TODO: We should blur / make transparent, the spaces for which we do not know the last selected index.
-// TODO: We should show the window when the alt-key is pressed long enough
-// TODO: We should handle better that we always consider the next empty space as well, and we can scroll to that one but it's only half the height.
-
 struct VisualEffectView: NSViewRepresentable {
   var material: NSVisualEffectView.Material
   var blendingMode: NSVisualEffectView.BlendingMode
@@ -38,9 +34,13 @@ struct WindowView: View {
           .resizable()
           .aspectRatio(contentMode: .fit)
       } else {
-        Text(window.appBundleId)
+        Image(systemName: window.appBundleId)
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .frame(width: 30.0, height: 30.0, alignment: .center)
+          .padding(50)
+          .background(Color.black.opacity(0.2))
           .frame(width: 80.0, height: 80.0, alignment: .center)
-          .background(Color.blue)
           .cornerRadius(15)
       }
     }

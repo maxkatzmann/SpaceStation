@@ -38,6 +38,7 @@ class Window: Codable, Identifiable, Hashable {
   let workspace: String
   var isFocused: Bool = false
   var isBlank: Bool = false
+  var isAddButton: Bool = false
 
   enum CodingKeys: String, CodingKey {
     case windowId = "window-id"
@@ -50,13 +51,15 @@ class Window: Codable, Identifiable, Hashable {
     appBundleId: String,
     workspace: String,
     isFocused: Bool = false,
-    isBlank: Bool = false
+    isBlank: Bool = false,
+    isAddButton: Bool = false
   ) {
     self.windowId = windowId
     self.appBundleId = appBundleId
     self.workspace = workspace
     self.isFocused = isFocused
     self.isBlank = isBlank
+    self.isAddButton = isAddButton
   }
 
   static func == (lhs: Window, rhs: Window) -> Bool {
@@ -211,17 +214,47 @@ class SpaceStation: ObservableObject {
       return
     }
 
+    var spaceCount = self.spaces.count
+
+    // Add an empty space that is supposed to represent adding a new space,
+    // but we only do so, if the last space does have some windows, because
+    // otherwise that space is already the "new" one.
+    let hasAddedSpace: Bool = (self.spaces.last?.windows.count ?? 0) > 0
+    if hasAddedSpace {
+      spaceCount += 1
+    }
+
     let maxWindowsInSpace = self.spaces.map { $0.windows.count }.max() ?? 1
     let windowsPerSpace = 2 * maxWindowsInSpace - 1
-    let totalSpaces = 2 * self.spaces.count - 1
+    let totalSpaces = 2 * spaceCount - 1
 
     var spacesRepresentation = [Space]()
 
     spacesRepresentation += Space.blanks(
-      count: self.spaces.count - 1 - selectedSpace, windowCount: windowsPerSpace)
+      count: spaceCount - 1 - selectedSpace, windowCount: windowsPerSpace)
 
     for space in self.spaces {
       spacesRepresentation.append(representation(forSpace: space, windowsPerSpace: windowsPerSpace))
+    }
+
+    if hasAddedSpace {
+      let lastSpaceNumber = Int(self.spaces.last?.name ?? "0") ?? 0
+      spacesRepresentation.append(
+        Space(
+          name: "\(lastSpaceNumber + 1)",
+          windows: [
+            Window(
+              windowId: -1,
+              appBundleId: "plus",
+              workspace: "",
+              isFocused: false,
+              isBlank: false,
+              isAddButton: true
+            )
+          ],
+          focusedIndex: 0,
+        )
+      )
     }
 
     spacesRepresentation += Space.blanks(
@@ -239,6 +272,10 @@ class SpaceStation: ObservableObject {
       windows += Window.blanks(count: windowsPerSpace - windows.count)
     } else {
       windows += space.windows
+    }
+
+    if space.windows.count == 0 {
+      windows += Window.blanks(count: 1)
     }
 
     let newSpace = Space(
@@ -307,10 +344,16 @@ extension SpaceStation: TouchMonitorDelegate {
     case .right:
       CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "left"])
     case .up:
-      if let selectedSpace = self.selectedSpace, self.spaces.count > selectedSpace + 1 {
-        CommandRunner.runAeroSpaceCommand(withArguments: [
-          "workspace", self.spaces[selectedSpace + 1].name,
-        ])
+      if let selectedSpace = self.selectedSpace {
+        if self.spaces.count > selectedSpace + 1 {
+          CommandRunner.runAeroSpaceCommand(withArguments: [
+            "workspace", self.spaces[selectedSpace + 1].name,
+          ])
+        } else {
+          CommandRunner.runAeroSpaceCommand(withArguments: [
+            "workspace", "\(self.spaces.count + 1)",
+          ])
+        }
       }
     case .down:
       if let selectedSpace = self.selectedSpace, selectedSpace > 0 {
