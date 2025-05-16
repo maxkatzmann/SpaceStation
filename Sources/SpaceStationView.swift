@@ -126,7 +126,7 @@ struct SpaceStationView: View {
     .padding(20)
     .background {
       VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-        .cornerRadius(25)
+        .cornerRadius(10)
     }
   }
 }
