@@ -19,3 +19,5 @@ on-focus-changed = ['exec-and-forget /Users/mkatzmann/Local/SpaceStation/main']
   windows alphabetically but rather to keep the sorting as it is in the tree
 - We are running the debug version, as it does not crash on an issue about
   [windows always have parent](https://github.com/nikitabobko/AeroSpace/issues/1306).
+- In order for certain key-event captures to work, you need to disable 
+  the `alt-w` mapping from your `.aerospace` config
