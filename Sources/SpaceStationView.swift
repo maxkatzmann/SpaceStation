@@ -19,31 +19,47 @@ struct VisualEffectView: NSViewRepresentable {
 }
 
 struct WindowView: View {
+  @EnvironmentObject var spaceStation: SpaceStation
   let window: Window
+  @State private var isHovering = false
 
   var body: some View {
     if window.isBlank {
       Color.clear
     } else {
-      if let app = NSWorkspace.shared.runningApplications.first(where: {
-        $0.bundleIdentifier == window.appBundleId
-      }),
-        let icon = app.icon
-      {
-        Image(nsImage: icon)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-      } else {
-        Image(systemName: window.appBundleId)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .frame(width: 30.0, height: 30.0, alignment: .center)
-          .padding(50)
-          .background(Color.black.opacity(0.2))
-          .frame(width: 80.0, height: 80.0, alignment: .center)
-          .cornerRadius(15)
+      Button(action: {
+        didClick()
+      }) {
+        if let app = NSWorkspace.shared.runningApplications.first(where: {
+          $0.bundleIdentifier == window.appBundleId
+        }),
+          let icon = app.icon
+        {
+          Image(nsImage: icon)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .brightness(isHovering ? 0.2 : 0)
+        } else {
+          Image(systemName: window.appBundleId)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 30.0, height: 30.0, alignment: .center)
+            .padding(50)
+            .background(Color.black.opacity(isHovering ? 0.3 : 0.2))
+            .frame(width: 80.0, height: 80.0, alignment: .center)
+            .cornerRadius(15)
+        }
+      }
+      .buttonStyle(PlainButtonStyle())
+      .onHover { hovering in
+        isHovering = hovering
       }
     }
+  }
+
+  func didClick() {
+    spaceStation.focus(window: window)
+    spaceStation.didRelease()
   }
 }
 

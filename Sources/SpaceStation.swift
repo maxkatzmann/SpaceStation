@@ -321,6 +321,14 @@ class SpaceStation: ObservableObject {
 
     return windows.first
   }
+
+  func focus(window: Window) {
+    CommandRunner.runAeroSpaceCommand(withArguments: [
+      "focus",
+      "--window-id",
+      "\(window.windowId)",
+    ])
+  }
 }
 
 extension SpaceStation: EventMonitorDelegate {
