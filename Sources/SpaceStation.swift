@@ -101,7 +101,7 @@ class SpaceStation: ObservableObject {
     self.eventMonitor.delegate = self
     self.touchMonitor.delegate = self
 
-    self.updateSpacesRepresentation()
+    self.updateSpaces()
   }
 
   func updateSpaces() {
