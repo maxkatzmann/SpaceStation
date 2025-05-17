@@ -97,6 +97,10 @@ class EventMonitor {
   @objc private func externalEventReceived(_ notification: Notification) {
     DispatchQueue.main.async {
       self.sendEvent()
+      // We stop the timer if we received an event. If the window is not shown,
+      // by now but the user is already manipulating the spaces, then we assume that
+      // they do no need the window.
+      self.stopUninterruptedOptionDownTimer()
     }
   }
 
