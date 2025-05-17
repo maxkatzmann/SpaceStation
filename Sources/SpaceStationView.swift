@@ -131,29 +131,35 @@ struct SpaceStationView: View {
   let scrollFactor: CGFloat = 75.0
 
   var body: some View {
-    ZStack {
-      VStack {
-        Spacer()
-        HStack {
+    GeometryReader { geometry in
+      ZStack {
+        VStack {
           Spacer()
-          Color.black.opacity(0.33)
-            .frame(width: 100.0, height: 100.0, alignment: .center)
-            .cornerRadius(8)
+          HStack {
+            Spacer()
+            Color.black.opacity(0.33)
+              .frame(width: 100.0, height: 100.0, alignment: .center)
+              .cornerRadius(8)
+            Spacer()
+          }
           Spacer()
         }
-        Spacer()
+
+        VStack(spacing: 10) {
+          ForEach(spaceStation.spacesRepresentation, id: \.self) { space in
+            SpaceView(space: space, scrollOffset: $spaceStation.scrollOffset)
+          }
+        }
+        .offset(y: -spaceStation.scrollOffset.y * scrollFactor)
+        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
+        .clipped()  // This ensures content outside the frame is not visible
       }
-      VStack(spacing: 10) {
-        ForEach(spaceStation.spacesRepresentation, id: \.self) { space in
-          SpaceView(space: space, scrollOffset: $spaceStation.scrollOffset)
-        }
-      }.offset(y: -spaceStation.scrollOffset.y * scrollFactor)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .padding(20)
-    .background {
-      VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
-        .cornerRadius(10)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(20)
+      .background {
+        VisualEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
+          .cornerRadius(10)
+      }
     }
   }
 }
