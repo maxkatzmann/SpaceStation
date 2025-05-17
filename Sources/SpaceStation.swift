@@ -335,6 +335,10 @@ extension SpaceStation: EventMonitorDelegate {
   func didObserveEvent() {
     self.updateSpaces()
   }
+
+  func didObserveKey(event: NSEvent) {
+    // Need to handle event
+  }
 }
 
 extension SpaceStation: TouchMonitorDelegate {

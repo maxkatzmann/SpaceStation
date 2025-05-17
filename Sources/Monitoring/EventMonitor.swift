@@ -9,6 +9,8 @@ protocol EventMonitorDelegate: AnyObject {
   func isHolding()
   // Called when the option key is released.
   func didRelease()
+  // Called when a specific key is pressed for which we listened.
+  func didObserveKey(event: NSEvent)
 }
 
 class EventMonitor {
@@ -57,10 +59,12 @@ class EventMonitor {
   }
 
   func setupKeyPressMonitor() {
-    NSEvent.addGlobalMonitorForEvents(matching: [.keyUp]) { [weak self] _ in
+    NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
       if self?.uninterruptedOptionDownTimer != nil {
         self?.stopUninterruptedOptionDownTimer()
       }
+
+      self?.delegate?.didObserveKey(event: event)
     }
   }
 
