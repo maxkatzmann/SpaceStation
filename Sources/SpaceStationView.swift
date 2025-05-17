@@ -19,8 +19,8 @@ struct VisualEffectView: NSViewRepresentable {
 }
 
 struct WindowView: View {
-  @EnvironmentObject var spaceStation: SpaceStation
   let window: Window
+  let spaceStation: SpaceStation
   @State private var isHovering = false
 
   var body: some View {
@@ -66,6 +66,7 @@ struct WindowView: View {
 struct SpaceView: View {
   @ObservedObject var space: Space
   @Binding var scrollOffset: CGPoint
+  let spaceStation: SpaceStation
   let scrollFactor: CGFloat = 50.0
 
   var body: some View {
@@ -75,7 +76,7 @@ struct SpaceView: View {
       ForEach(Array(groups.enumerated()), id: \.offset) { index, windowGroup in
         HStack(spacing: 0) {
           ForEach(windowGroup, id: \.self) { window in
-            WindowView(window: window)
+            WindowView(window: window, spaceStation: spaceStation)
               .frame(width: 100.0, height: 100.0, alignment: .center)
           }
         }
@@ -147,7 +148,8 @@ struct SpaceStationView: View {
 
         VStack(spacing: 10) {
           ForEach(spaceStation.spacesRepresentation, id: \.self) { space in
-            SpaceView(space: space, scrollOffset: $spaceStation.scrollOffset)
+            SpaceView(
+              space: space, scrollOffset: $spaceStation.scrollOffset, spaceStation: spaceStation)
           }
         }
         .offset(y: -spaceStation.scrollOffset.y * scrollFactor)
