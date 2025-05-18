@@ -104,14 +104,12 @@ class TouchMonitor: ObservableObject {
         }
 
         self?.updatePanningStateIfNeeded(touches)
-
-        await MainActor.run {
-          self?.handleTouches(touches: touches)
-        }
+        await self?.handleTouches(touches: touches)
       }
     }
   }
 
+  @MainActor
   func handleTouches(touches: [OMSTouchData]) {
     guard self.isPanning else {
       self.updateStartPointIfNeeded(nil)
