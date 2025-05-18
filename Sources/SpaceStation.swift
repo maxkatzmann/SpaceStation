@@ -328,7 +328,7 @@ class SpaceStation: ObservableObject {
   }
 
   func focus(window: Window) {
-    CommandRunner.runAeroSpaceCommand(withArguments: [
+    _ = CommandRunner.runAeroSpaceCommand(withArguments: [
       "focus",
       "--window-id",
       "\(window.windowId)",
@@ -336,7 +336,7 @@ class SpaceStation: ObservableObject {
   }
 
   func close(window: Window) {
-    CommandRunner.runAeroSpaceCommand(withArguments: [
+    _ = CommandRunner.runAeroSpaceCommand(withArguments: [
       "close",
       "--window-id",
       "\(window.windowId)",
@@ -367,24 +367,24 @@ extension SpaceStation: TouchMonitorDelegate {
   func move(in direction: Direction) {
     switch direction {
     case .left:
-      CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "right"])
+      _ = CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "right"])
     case .right:
-      CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "left"])
+      _ = CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "left"])
     case .up:
       if let selectedSpace = self.selectedSpace {
         if self.spaces.count > selectedSpace + 1 {
-          CommandRunner.runAeroSpaceCommand(withArguments: [
+          _ = CommandRunner.runAeroSpaceCommand(withArguments: [
             "workspace", self.spaces[selectedSpace + 1].name,
           ])
         } else {
-          CommandRunner.runAeroSpaceCommand(withArguments: [
+          _ = CommandRunner.runAeroSpaceCommand(withArguments: [
             "workspace", "\(self.spaces.count + 1)",
           ])
         }
       }
     case .down:
       if let selectedSpace = self.selectedSpace, selectedSpace > 0 {
-        CommandRunner.runAeroSpaceCommand(withArguments: [
+        _ = CommandRunner.runAeroSpaceCommand(withArguments: [
           "workspace", self.spaces[selectedSpace - 1].name,
         ])
       }
