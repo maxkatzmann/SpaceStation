@@ -64,7 +64,9 @@ class EventMonitor {
         self?.stopUninterruptedOptionDownTimer()
       }
 
-      self?.delegate?.didObserveKey(event: event)
+      if let key = event.key, key == "w" {
+        self?.delegate?.didObserveKey(event: event)
+      }
     }
   }
 

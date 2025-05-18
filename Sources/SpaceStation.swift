@@ -84,7 +84,12 @@ class SpaceStation: ObservableObject {
 
   @Published var spaces: [Space] = []
   @Published var spacesRepresentation: [Space] = []
-  @Published var shouldDisplay = false
+  @Published var shouldDisplay = false {
+    didSet {
+      // Only consume 'w' key presses when the window is shown.
+      EventTapManager.shared.isConsumingWKeyPresses = shouldDisplay
+    }
+  }
   @Published var scrollOffset: CGPoint = .zero
 
   private var lastFocusedIndexPerSpace: [String: Int] = [:]
@@ -329,6 +334,14 @@ class SpaceStation: ObservableObject {
       "\(window.windowId)",
     ])
   }
+
+  func close(window: Window) {
+    CommandRunner.runAeroSpaceCommand(withArguments: [
+      "close",
+      "--window-id",
+      "\(window.windowId)",
+    ])
+  }
 }
 
 extension SpaceStation: EventMonitorDelegate {
@@ -337,7 +350,9 @@ extension SpaceStation: EventMonitorDelegate {
   }
 
   func didObserveKey(event: NSEvent) {
-    // Need to handle event
+    if self.shouldDisplay, event.key == "w", let focusedWindow = self.focusedWindow() {
+      self.close(window: focusedWindow)
+    }
   }
 }
 

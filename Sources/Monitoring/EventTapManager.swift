@@ -21,6 +21,28 @@ private func eventTapCallback(
       // If the flag is set, consume the scroll event by returning nil
       return nil
     }
+  case .keyDown:
+    if manager.isConsumingWKeyPresses {
+      // Check if this is a 'w' key press
+      let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+      if keyCode == 13 {  // 13 is the keycode for 'w' on macOS
+        // Get the target process ID
+        let targetPIDInt64 = event.getIntegerValueField(.eventTargetUnixProcessID)
+        guard targetPIDInt64 <= Int64(Int32.max) else {
+          return nil  // PID is too large for pid_t
+        }
+        let targetPID = pid_t(targetPIDInt64)
+
+        // Check if this event is targeted at our application
+        if targetPID == manager.ourApplicationPID {
+          // Allow the event to go through to our application
+          return Unmanaged.passRetained(event)
+        } else {
+          // Consume the event for other applications
+          return nil
+        }
+      }
+    }
   case .tapDisabledByTimeout:
     // The tap has been disabled due to a timeout. Re-enable it.
     if let tap = manager.eventTap {
@@ -53,6 +75,12 @@ public class EventTapManager {
   // When true, the eventTapCallback will consume scroll events.
   public var isConsumingScrollEvents: Bool = false
 
+  // When true, the eventTapCallback will consume 'w' key presses for other apps
+  public var isConsumingWKeyPresses: Bool = false
+
+  // Store the PID of our application to allow events through to it
+  public var ourApplicationPID: pid_t = ProcessInfo.processInfo.processIdentifier
+
   public func startTap() {
     // Nothing to do if we are already running.
     guard eventTap == nil else {
@@ -66,19 +94,20 @@ public class EventTapManager {
     // Define the events we are interested in.
     // We need scrollWheel for consumption and tapDisabledByTimeout to keep the tap alive.
     let eventsToTap: CGEventMask =
-      (1 << CGEventType.scrollWheel.rawValue) | (1 << CGEventType.tapDisabledByTimeout.rawValue)
+      (1 << CGEventType.scrollWheel.rawValue) | (1 << CGEventType.keyDown.rawValue)
+      | (1 << CGEventType.tapDisabledByTimeout.rawValue)
       | (1 << CGEventType.tapDisabledByUserInput.rawValue)
 
     // Create the event tap.
-    // .cghidEventTap taps events at a low level, before they are posted to applications.
+    // Using cgAnnotatedSessionEventTap to tap events at session level so we can filter by app
     guard
       let tap = CGEvent.tapCreate(
-        tap: .cghidEventTap,  // Tap location
-        place: .headInsertEventTap,  // Insert at the head of the event stream
-        options: .defaultTap,  // Default behavior (can modify events)
-        eventsOfInterest: eventsToTap,  // Mask for the events we want
-        callback: eventTapCallback,  // Our C callback function
-        userInfo: selfPtr  // Pointer to self (EventTapManager instance)
+        tap: .cgAnnotatedSessionEventTap,  // Change to session-level tap
+        place: .headInsertEventTap,
+        options: .defaultTap,
+        eventsOfInterest: eventsToTap,
+        callback: eventTapCallback,
+        userInfo: selfPtr
       )
     else {
       return
