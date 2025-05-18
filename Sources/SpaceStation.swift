@@ -390,6 +390,10 @@ extension SpaceStation: TouchMonitorDelegate {
       }
     }
 
+    // Provide haptic feedback
+    let hapticFeedback = NSHapticFeedbackManager.defaultPerformer
+    hapticFeedback.perform(.levelChange, performanceTime: .default)
+
     self.updateSpacesRepresentation()
   }
 
