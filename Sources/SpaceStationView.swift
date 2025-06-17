@@ -138,7 +138,7 @@ struct SpaceStationView: View {
           Spacer()
           HStack {
             Spacer()
-            Color.black.opacity(0.33)
+            Color.black.opacity(0.75)
               .frame(width: 100.0, height: 100.0, alignment: .center)
               .cornerRadius(8)
             Spacer()
