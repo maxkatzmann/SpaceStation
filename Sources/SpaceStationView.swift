@@ -23,6 +23,15 @@ struct WindowView: View {
   let spaceStation: SpaceStation
   @State private var isHovering = false
 
+  // Since clicks can turn into a drag easily, we additionally
+  // enable selection upon drag end.
+  var drag: some Gesture {
+    DragGesture()
+      .onEnded { _ in
+        didClick()
+      }
+  }
+
   var body: some View {
     if window.isBlank {
       Color.clear
@@ -54,6 +63,7 @@ struct WindowView: View {
       .onHover { hovering in
         isHovering = hovering
       }
+      .gesture(drag)
     }
   }
 
