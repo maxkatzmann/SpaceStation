@@ -1,7 +1,11 @@
 import Foundation
+import os.log
 
 class CommandRunner {
+  private static let logger = Logger(subsystem: "com.spacestation.app", category: "CommandRunner")
+  
   static func runAeroSpaceCommand(withArguments arguments: [String]) -> Data? {
+    logger.info("Running command with arguments: \(arguments, privacy: .public)")
     let process = Process()
     process.executableURL = URL(
       fileURLWithPath:
@@ -18,7 +22,7 @@ class CommandRunner {
       process.waitUntilExit()
       return pipe.fileHandleForReading.readDataToEndOfFile()
     } catch {
-      print("Error running command: \(error)")
+      logger.error("Error running command: \(error, privacy: .public)")
       return nil
     }
   }
