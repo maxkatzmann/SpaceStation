@@ -37,7 +37,7 @@ struct SpaceStationApp: App {
     MenuBarExtra {
       ForEach(spaceStation.spaces, id: \.name) { space in
         Button {
-          CommandRunner.runAeroSpaceCommand(
+          _ = CommandRunner.runAeroSpaceCommand(
             withArguments: ["workspace", space.name]
           )
           self.spaceStation.updateSpaces()

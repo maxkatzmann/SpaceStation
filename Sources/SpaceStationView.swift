@@ -99,7 +99,7 @@ struct SpaceView: View {
         }
         .overlay {
           if !(windowGroup.first?.isBlank ?? true) && space.focusedIndex == nil {
-            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
+            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
               .opacity(0.9)
               .cornerRadius(15)
           }
