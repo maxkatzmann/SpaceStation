@@ -103,7 +103,6 @@ class TouchMonitor: ObservableObject {
           continue
         }
 
-        self?.updatePanningStateIfNeeded(touches)
         await self?.handleTouches(touches: touches)
       }
     }
@@ -111,6 +110,10 @@ class TouchMonitor: ObservableObject {
 
   @MainActor
   func handleTouches(touches: [OMSTouchData]) {
+    // Update panning state here on @MainActor so that isPanning is never written
+    // from a background Task and read here concurrently.
+    updatePanningStateIfNeeded(touches)
+
     guard self.isPanning else {
       self.updateStartPointIfNeeded(nil)
       self.updateLastPoint(nil)

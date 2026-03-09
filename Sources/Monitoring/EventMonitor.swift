@@ -77,17 +77,19 @@ class EventMonitor {
       // We send these events with a delay to avoid crashes in AeroSpace,
       // which probably occur since AeroSpace has some internal cleanup to
       // do, before the state is ready to be queried again.
-      self.swindler.on { (event: WindowCreatedEvent) in
-        self.sendEvent(withDelay: true)
+      self.swindler.on { [weak self] (event: WindowCreatedEvent) in
+        self?.sendEvent(withDelay: true)
       }
 
-      self.swindler.on { (event: WindowDestroyedEvent) in
-        self.sendEvent(withDelay: true)
+      self.swindler.on { [weak self] (event: WindowDestroyedEvent) in
+        self?.sendEvent(withDelay: true)
       }
     }.catch { error in
+      // Swindler failed to initialize — window create/destroy events will not trigger
+      // automatic updates, but the app remains fully functional via AeroSpace distributed
+      // notifications, the recurring option-key timer, and manual refreshes.
       print(
-        "Fatal error: failed to initialize Swindler: \(String(describing: error))")
-      NSApp.terminate(self)
+        "Warning: Swindler initialization failed (\(error)). Window lifecycle events disabled.")
     }
   }
 

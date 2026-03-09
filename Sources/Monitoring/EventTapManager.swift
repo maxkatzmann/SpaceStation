@@ -1,5 +1,6 @@
 import Cocoa
 import CoreGraphics
+import os
 
 // The CGEventTap callback function
 // This MUST be a C function or a @convention(c) closure.
@@ -71,12 +72,20 @@ public class EventTapManager {
   fileprivate var eventTap: CFMachPort?
   fileprivate var runLoopSource: CFRunLoopSource?
 
-  // This flag is controlled by our gesture detection logic.
-  // When true, the eventTapCallback will consume scroll events.
-  public var isConsumingScrollEvents: Bool = false
+  // These flags are read from the CGEventTap callback thread and written from the main
+  // thread and background Tasks, so they must be protected with a lock.
+  private let scrollLock = OSAllocatedUnfairLock(initialState: false)
+  private let wKeyLock = OSAllocatedUnfairLock(initialState: false)
 
-  // When true, the eventTapCallback will consume 'w' key presses for other apps
-  public var isConsumingWKeyPresses: Bool = false
+  public var isConsumingScrollEvents: Bool {
+    get { scrollLock.withLock { $0 } }
+    set { scrollLock.withLock { $0 = newValue } }
+  }
+
+  public var isConsumingWKeyPresses: Bool {
+    get { wKeyLock.withLock { $0 } }
+    set { wKeyLock.withLock { $0 = newValue } }
+  }
 
   // Store the PID of our application to allow events through to it
   public var ourApplicationPID: pid_t = ProcessInfo.processInfo.processIdentifier
