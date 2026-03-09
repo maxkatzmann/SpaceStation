@@ -16,14 +16,20 @@ class FloatingWindowController {
   private var windowDelegate: WindowDelegate?
 
   func showWindow(with rootView: some View, spaceStation: SpaceStation) {
-    if window != nil {
-      window?.orderFront(nil)
+    let frame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
+
+    if let window = window {
+      // Resize and re-center to match the current screen every time the window is shown,
+      // so that resolution or display changes (e.g. switching monitors) are picked up.
+      window.setFrame(frame, display: false)
+      window.center()
+      window.orderFront(nil)
       return
     }
 
     // Create the window
     let window = NSWindow(
-      contentRect: NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 800, height: 600),
+      contentRect: frame,
       styleMask: [.hudWindow],
       backing: .buffered,
       defer: false
