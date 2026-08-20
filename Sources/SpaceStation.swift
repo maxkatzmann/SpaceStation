@@ -23,6 +23,9 @@ class Space: Identifiable, Hashable, ObservableObject {
   }
 
   static func blanks(count: Int, windowCount: Int) -> [Space] {
+    guard count > 0 else {
+      return []
+    }
     return (0..<count).map { _ in Space(name: "blank", windows: Window.blanks(count: windowCount)) }
   }
 }
@@ -71,6 +74,9 @@ class Window: Codable, Identifiable, Hashable {
   }
 
   static func blanks(count: Int) -> [Window] {
+    guard count > 0 else {
+      return []
+    }
     return (0..<count).map { _ in
       Window(windowId: -1, appBundleId: "", workspace: "", isFocused: false, isBlank: true)
     }
@@ -187,6 +193,8 @@ class SpaceStation: ObservableObject {
 
       spaces = spaces.sorted(using: KeyPathComparator(\.name))
 
+      self?.pruneFocusedIndices(for: spaces)
+
       guard !Task.isCancelled else {
         return
       }
@@ -270,9 +278,10 @@ class SpaceStation: ObservableObject {
 
   func representation(forSpace space: Space, windowsPerSpace: Int) -> Space {
     var windows = [Window]()
+    let focusedIndex = sanitizedFocusedIndex(for: space)
 
-    if let focusedIndex = self.lastFocusedIndexPerSpace[space.name] {
-      windows += Window.blanks(count: (windowsPerSpace / 2) - focusedIndex)
+    if let focusedIndex {
+      windows += Window.blanks(count: max(0, (windowsPerSpace / 2) - focusedIndex))
       windows += space.windows
       windows += Window.blanks(count: windowsPerSpace - windows.count)
     } else {
@@ -285,8 +294,37 @@ class SpaceStation: ObservableObject {
 
     let newSpace = Space(
       name: space.name, windows: windows, isFocused: space.isFocused,
-      focusedIndex: self.lastFocusedIndexPerSpace[space.name])
+      focusedIndex: focusedIndex)
     return newSpace
+  }
+
+  func pruneFocusedIndices(for spaces: [Space]) {
+    let validSpaceNames = Set(spaces.map(\.name))
+
+    lastFocusedIndexPerSpace = lastFocusedIndexPerSpace.reduce(into: [:]) { result, entry in
+      let (spaceName, focusedIndex) = entry
+
+      guard
+        validSpaceNames.contains(spaceName),
+        let space = spaces.first(where: { $0.name == spaceName }),
+        space.windows.indices.contains(focusedIndex)
+      else {
+        return
+      }
+
+      result[spaceName] = focusedIndex
+    }
+  }
+
+  func sanitizedFocusedIndex(for space: Space) -> Int? {
+    guard
+      let focusedIndex = self.lastFocusedIndexPerSpace[space.name],
+      space.windows.indices.contains(focusedIndex)
+    else {
+      return nil
+    }
+
+    return focusedIndex
   }
 
   func focusedWorkspace() -> String? {
