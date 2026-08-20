@@ -18,6 +18,7 @@ class EventMonitor {
 
   private var recurringTimer: Timer?
   private var uninterruptedOptionDownTimer: Timer?
+  private var localModifierEventMonitor: Any?
 
   private var optionDown: Bool = false {
     didSet {
@@ -52,10 +53,19 @@ class EventMonitor {
   }
 
   func setupModifierEventMonitor() {
-    NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) {
-      [weak self] (event) in
-      self?.optionDown = NSEvent.modifierFlags.contains(.option)
+    NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged]) { [weak self] event in
+      self?.updateOptionDownState(for: event)
     }
+
+    localModifierEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged]) {
+      [weak self] event in
+      self?.updateOptionDownState(for: event)
+      return event
+    }
+  }
+
+  private func updateOptionDownState(for event: NSEvent) {
+    optionDown = event.modifierFlags.contains(.option)
   }
 
   func setupKeyPressMonitor() {
@@ -145,6 +155,12 @@ class EventMonitor {
       }
     } else {
       self.delegate?.didObserveEvent()
+    }
+  }
+
+  deinit {
+    if let localModifierEventMonitor {
+      NSEvent.removeMonitor(localModifierEventMonitor)
     }
   }
 }
