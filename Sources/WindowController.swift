@@ -30,7 +30,7 @@ class FloatingWindowController {
     // Create the window
     let window = NSWindow(
       contentRect: frame,
-      styleMask: [.hudWindow],
+      styleMask: [.borderless, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )
@@ -39,15 +39,9 @@ class FloatingWindowController {
     window.center()
     window.isReleasedWhenClosed = false
     window.level = .floating  // This makes it stay on top of other windows
-    window.title = "SpaceStation"
-    window.titleVisibility = .hidden
-    window.titlebarAppearsTransparent = true
     window.backgroundColor = .clear
     window.isOpaque = false
-    window.hasShadow = false  // Optional, removes the window shadow
-    window.standardWindowButton(.closeButton)?.isHidden = true
-    window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-    window.standardWindowButton(.zoomButton)?.isHidden = true
+    window.hasShadow = false
 
     // Set window content
     let hostingView = NSHostingView(rootView: rootView.environmentObject(spaceStation))
