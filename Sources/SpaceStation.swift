@@ -83,10 +83,12 @@ class Window: Codable, Identifiable, Hashable {
   }
 }
 
+@MainActor
 class SpaceStation: ObservableObject {
   private let eventMonitor = EventMonitor()
   private let touchMonitor = TouchMonitor()
   private var currentUpdateTask: Task<Void, Never>? = nil
+  private var updateQueued = false
 
   @Published var spaces: [Space] = []
   @Published var spacesRepresentation: [Space] = []
@@ -101,11 +103,7 @@ class SpaceStation: ObservableObject {
   private var lastFocusedIndexPerSpace: [String: Int] = [:]
 
   var selectedSpace: Int? {
-    guard !spaces.isEmpty, let focusedWorkspace = self.focusedWorkspace() else {
-      return nil
-    }
-
-    return self.spaces.firstIndex(where: { $0.name == focusedWorkspace })
+    spaces.firstIndex(where: \.isFocused)
   }
 
   init() {
@@ -116,14 +114,26 @@ class SpaceStation: ObservableObject {
   }
 
   func updateSpaces() {
-    currentUpdateTask?.cancel()
+    guard currentUpdateTask == nil else {
+      updateQueued = true
+      return
+    }
+
     currentUpdateTask = Task { [weak self] in
-      guard !Task.isCancelled else {
+      guard let self else {
         return
       }
 
+      defer {
+        self.currentUpdateTask = nil
+        if self.updateQueued {
+          self.updateQueued = false
+          self.updateSpaces()
+        }
+      }
+
       guard
-        let result = CommandRunner.runAeroSpaceCommand(withArguments: [
+        let result = await CommandRunner.runAeroSpaceCommand(withArguments: [
           "list-windows",
           "--all",
           "--json",
@@ -134,15 +144,7 @@ class SpaceStation: ObservableObject {
         return
       }
 
-      guard !Task.isCancelled else {
-        return
-      }
-
       guard let windows = try? JSONDecoder().decode([Window].self, from: result) else {
-        return
-      }
-
-      guard !Task.isCancelled else {
         return
       }
 
@@ -164,48 +166,43 @@ class SpaceStation: ObservableObject {
           )
         }
 
-      guard !Task.isCancelled else {
+      guard
+        let focusedWorkspace = await self.focusedWorkspace()
+      else {
         return
       }
+      var spaceFound = false
 
-      if let focusedWorkspace = self?.focusedWorkspace() {
-        var spaceFound = false
-
-        for i in 0..<spaces.count {
-          if spaces[i].name == focusedWorkspace {
-            spaces[i].isFocused = true
-            spaceFound = true
-          } else {
-            spaces[i].isFocused = false
-          }
+      for i in 0..<spaces.count {
+        if spaces[i].name == focusedWorkspace {
+          spaces[i].isFocused = true
+          spaceFound = true
+        } else {
+          spaces[i].isFocused = false
         }
+      }
 
-        if !spaceFound {
-          spaces.append(
-            Space(
-              name: focusedWorkspace,
-              windows: [],
-              isFocused: true
-            )
+      if !spaceFound {
+        spaces.append(
+          Space(
+            name: focusedWorkspace,
+            windows: [],
+            isFocused: true
           )
-        }
+        )
       }
 
       spaces = spaces.sorted(using: KeyPathComparator(\.name))
 
-      self?.pruneFocusedIndices(for: spaces)
+      self.pruneFocusedIndices(for: spaces)
 
-      guard !Task.isCancelled else {
-        return
-      }
-
-      if let focusedWindow = self?.focusedWindow(),
+      if let focusedWindow = await self.focusedWindow(),
         let focusedSpaceIndex = spaces.firstIndex(where: { $0.isFocused }),
         let focusedWindowIndex = spaces[focusedSpaceIndex].windows.firstIndex(where: {
           $0.windowId == focusedWindow.windowId
         })
       {
-        self?.lastFocusedIndexPerSpace[spaces[focusedSpaceIndex].name] = focusedWindowIndex
+        self.lastFocusedIndexPerSpace[spaces[focusedSpaceIndex].name] = focusedWindowIndex
         spaces[focusedSpaceIndex].windows[focusedWindowIndex].isFocused = true
       } else {
         for i in 0..<spaces.count {
@@ -215,10 +212,8 @@ class SpaceStation: ObservableObject {
         }
       }
 
-      DispatchQueue.main.async {
-        self?.spaces = spaces
-        self?.updateSpacesRepresentation()
-      }
+      self.spaces = spaces
+      self.updateSpacesRepresentation()
     }
   }
 
@@ -327,9 +322,9 @@ class SpaceStation: ObservableObject {
     return focusedIndex
   }
 
-  func focusedWorkspace() -> String? {
+  func focusedWorkspace() async -> String? {
     guard
-      let result = CommandRunner.runAeroSpaceCommand(withArguments: [
+      let result = await CommandRunner.runAeroSpaceCommand(withArguments: [
         "list-workspaces",
         "--focused",
         "--json",
@@ -345,9 +340,9 @@ class SpaceStation: ObservableObject {
     return selection.first?.workspace
   }
 
-  func focusedWindow() -> Window? {
+  func focusedWindow() async -> Window? {
     guard
-      let result = CommandRunner.runAeroSpaceCommand(withArguments: [
+      let result = await CommandRunner.runAeroSpaceCommand(withArguments: [
         "list-windows",
         "--focused",
         "--json",
@@ -366,35 +361,44 @@ class SpaceStation: ObservableObject {
   }
 
   func focus(window: Window) {
-    _ = CommandRunner.runAeroSpaceCommand(withArguments: [
+    Task {
+      _ = await CommandRunner.runAeroSpaceCommand(withArguments: [
       "focus",
       "--window-id",
       "\(window.windowId)",
-    ])
+      ])
+    }
   }
 
   func close(window: Window) {
-    _ = CommandRunner.runAeroSpaceCommand(withArguments: [
+    Task {
+      _ = await CommandRunner.runAeroSpaceCommand(withArguments: [
       "close",
       "--window-id",
       "\(window.windowId)",
-    ])
+      ])
+    }
   }
 }
 
-extension SpaceStation: EventMonitorDelegate {
+extension SpaceStation: @preconcurrency EventMonitorDelegate {
   func didObserveEvent() {
     self.updateSpaces()
   }
 
   func didObserveKey(event: NSEvent) {
-    if self.shouldDisplay, event.key == "w", let focusedWindow = self.focusedWindow() {
-      self.close(window: focusedWindow)
+    guard self.shouldDisplay, event.key == "w" else {
+      return
+    }
+    Task {
+      if let focusedWindow = await self.focusedWindow() {
+        self.close(window: focusedWindow)
+      }
     }
   }
 }
 
-extension SpaceStation: TouchMonitorDelegate {
+extension SpaceStation: @preconcurrency TouchMonitorDelegate {
   func didPan(_ direction: Direction) {
     self.move(in: direction)
   }
@@ -403,28 +407,24 @@ extension SpaceStation: TouchMonitorDelegate {
   }
 
   func move(in direction: Direction) {
+    let arguments: [String]?
     switch direction {
-    case .left:
-      _ = CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "right"])
-    case .right:
-      _ = CommandRunner.runAeroSpaceCommand(withArguments: ["focus", "left"])
+    case .left: arguments = ["focus", "right"]
+    case .right: arguments = ["focus", "left"]
     case .up:
-      if let selectedSpace = self.selectedSpace {
-        if self.spaces.count > selectedSpace + 1 {
-          _ = CommandRunner.runAeroSpaceCommand(withArguments: [
-            "workspace", self.spaces[selectedSpace + 1].name,
-          ])
-        } else {
-          _ = CommandRunner.runAeroSpaceCommand(withArguments: [
-            "workspace", "\(self.spaces.count + 1)",
-          ])
-        }
-      }
+      guard let selectedSpace else { return }
+      arguments = selectedSpace + 1 < spaces.count
+        ? ["workspace", spaces[selectedSpace + 1].name]
+        : ["workspace", "\(spaces.count + 1)"]
     case .down:
-      if let selectedSpace = self.selectedSpace, selectedSpace > 0 {
-        _ = CommandRunner.runAeroSpaceCommand(withArguments: [
-          "workspace", self.spaces[selectedSpace - 1].name,
-        ])
+      guard let selectedSpace, selectedSpace > 0 else { return }
+      arguments = ["workspace", spaces[selectedSpace - 1].name]
+    }
+
+    if let arguments {
+      Task {
+        _ = await CommandRunner.runAeroSpaceCommand(withArguments: arguments)
+        self.updateSpaces()
       }
     }
 
